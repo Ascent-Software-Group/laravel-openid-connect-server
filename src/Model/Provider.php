@@ -9,7 +9,7 @@ class Provider implements ProviderInterface
 
     public function __construct()
     {
-        $this->wellKnown = array(
+        $this->wellKnown = (object)array(
             'response_types_supported' =>
             [
                 'code',
@@ -80,8 +80,8 @@ class Provider implements ProviderInterface
 
     public function toJson($options = 0)
     {
-        return json_encode([
+        return json_encode(
             $this->wellKnown
-        ], $options);
+        , $options);
     }
 }
