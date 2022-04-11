@@ -38,13 +38,13 @@ class KeyRepository
     public static function generateNew()
     {
         $dn = array(
-            "countryName" => "NL",
-            "stateOrProvinceName" => "Noord-Holland",
-            "localityName" => "Hilversum",
-            "organizationName" => "a11n",
-            "organizationalUnitName" => "Developer",
+            "countryName" => "US",
+            "stateOrProvinceName" => "Utah",
+            "localityName" => "Alpine",
+            "organizationName" => "Ascent Software Group",
+            "organizationalUnitName" => "Jaro",
             "commonName" => "a11n",
-            "emailAddress" => "arietimmerman@a11n.nl"
+            "emailAddress" => "help@jarodesk.com"
         );
 
         // Generate a new private (and public) key pair
