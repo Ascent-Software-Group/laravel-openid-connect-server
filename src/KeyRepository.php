@@ -10,13 +10,13 @@ class KeyRepository
 {
     public function getPrivateKey()
     {
-        return new CryptKey(config('passport.public_key'));
+        return new CryptKey(config('passport.private_key'));
     }
 
     public function getPublicKey()
     {
         return new CryptKey(
-            config('passport.private_key')
+            config('passport.public_key')
         );
     }
 
