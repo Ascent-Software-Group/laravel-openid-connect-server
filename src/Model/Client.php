@@ -68,6 +68,8 @@ class Client extends LaravelClient
     // Ensure compatability with the defaukt OAuth client
     public function getRedirectAttribute()
     {
+        if(is_array($this->redirect_uris)) return $this->redirect_uris;
+        
         return implode(',', $this->redirect_uris);
     }
 }
