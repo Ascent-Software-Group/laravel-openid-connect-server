@@ -17,7 +17,7 @@ class RouteRegistrar extends LaravelRouteRegistrar
 
     public function forAuthorization()
     {
-        $this->router->group(['middleware' => ['web']], function ($router) {
+        $this->router->group(['middleware' => ['web', 'auth']], function ($router) {
             $router->get('/authorize', [
                 'uses' => '\Idaas\Passport\Http\Controllers\AuthorizationController@authorize',
             ])->name('oauth.authorize');
