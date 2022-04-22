@@ -19,8 +19,11 @@ class UserRepository extends LaravelUserRepository implements UserRepositoryInte
      */
     public function getAttributes(UserEntityInterface $user, $claims, $scopes)
     {
+        $user = $this->getUserByIdentifier($user->getIdentifier());
+
         return [
-            'sub' => $user->getIdentifier()
+            'email' => $user->email,
+            'full_name' => $user->name
         ];
     }
 
