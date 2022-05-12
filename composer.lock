@@ -2196,12 +2196,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/Ascent-Software-Group/openid-connect-server.git",
-                "reference": "b4b124dcd042ebe708b60ad3e4e850599d5e0cb5"
+                "reference": "a555b2865b38e6d22f5cf77a81043ba867cb899e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Ascent-Software-Group/openid-connect-server/zipball/b4b124dcd042ebe708b60ad3e4e850599d5e0cb5",
-                "reference": "b4b124dcd042ebe708b60ad3e4e850599d5e0cb5",
+                "url": "https://api.github.com/repos/Ascent-Software-Group/openid-connect-server/zipball/a555b2865b38e6d22f5cf77a81043ba867cb899e",
+                "reference": "a555b2865b38e6d22f5cf77a81043ba867cb899e",
                 "shasum": ""
             },
             "require": {
@@ -2238,7 +2238,7 @@
             "support": {
                 "source": "https://github.com/Ascent-Software-Group/openid-connect-server/tree/master"
             },
-            "time": "2022-05-12T12:51:22+00:00"
+            "time": "2022-05-12T13:11:16+00:00"
         },
         {
             "name": "nyholm/psr7",
