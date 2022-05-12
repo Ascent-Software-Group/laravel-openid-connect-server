@@ -33,8 +33,14 @@
             ]
         }
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url":  "git@github.com:Ascent-Software-Group/openid-connect-server.git"
+        }
+    ],
     "require": {
-        "nl.idaas/openid-server": "^0.2.4",
+        "nl.idaas/openid-server": "dev-master",
         "laravel/passport": "^10",
         "laravel/legacy-factories": "^1.3"
     },
