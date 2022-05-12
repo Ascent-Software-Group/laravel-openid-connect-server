@@ -50,6 +50,6 @@ class UserRepository extends LaravelUserRepository implements UserRepositoryInte
             return null;
         }
 
-        return new User($user->getAuthIdentifier());
+        return $user;
     }
 }
