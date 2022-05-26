@@ -22,6 +22,7 @@ class PassportConfig
 
     public function doLogoutResponse(Request $request, $valid, $redirectUri, $state)
     {
-        return null;
+        Auth::logout();
+        return redirect($redirectUri ?? config('app.weburl'));
     }
 }
