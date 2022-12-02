@@ -38,7 +38,7 @@ class AuthorizationController extends LaravelAuthorizationController
 
         if (($token && $token->scopes === collect($scopes)->pluck('id')->all()) ||
             $client->skipsAuthorization()) {
-            return $this->approveRequest($authRequest, $user);
+            return true;
         }
 
         $request->session()->put('authToken', $authToken = Str::random());
