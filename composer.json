@@ -43,7 +43,7 @@
     ],
     "require": {
         "laravel/legacy-factories": "^1.3",
-        "nl.idaas/openid-server": "dev-master",
+        "nl.idaas/openid-server": "dev-develop",
         "illuminate/http": "^10.0|^11.0",
         "illuminate/contracts": "^10.0|^11.0",
         "illuminate/support": "^10.0|^11.0",
