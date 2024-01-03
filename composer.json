@@ -23,7 +23,9 @@
     "autoload-dev": {
         "psr-4": {
             "IdaasPassportTests\\": "tests/",
-            "Laravel\\Passport\\Tests\\": "vendor/laravel/passport/tests/"
+            "Laravel\\Passport\\Tests\\": "vendor/laravel/passport/tests/",
+            "Workbench\\App\\": "workbench/app/",
+            "Workbench\\Database\\Factories\\": "workbench/database/factories/"
         }
     },
     "extra": {
@@ -40,13 +42,18 @@
         }
     ],
     "require": {
+        "laravel/legacy-factories": "^1.3",
         "nl.idaas/openid-server": "dev-master",
-        "laravel/passport": "^10",
-        "laravel/legacy-factories": "^1.3"
+        "illuminate/http": "^10.0|^11.0",
+        "illuminate/contracts": "^10.0|^11.0",
+        "illuminate/support": "^10.0|^11.0",
+        "illuminate/auth": "^10.0|^11.0",
+        "illuminate/database": "^10.0|^11.0",
+        "laravel/passport": "^10.0|^11.0"
     },
     "require-dev": {
         "mockery/mockery": "^1.0",
-        "orchestra/testbench": "^6.0|^7.0",
+        "orchestra/testbench": "^6.0|^7.0|^8",
         "phpunit/phpunit": "^9.3"
     },
     "license": "LGPL-3.0-only"
