@@ -62,7 +62,7 @@ class ProviderController extends BaseController
             'alg' => 'RS256',
             'kty' => 'RSA',
             'use' => 'sig',
-            'kid' => $crypt->kid ?? 1
+            'kid' => strval($crypt->kid ?? 1)
         ];
 
         if (!empty($crypt->x509)) {
