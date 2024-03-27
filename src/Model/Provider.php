@@ -4,6 +4,7 @@ namespace Idaas\Passport\Model;
 
 class Provider implements ProviderInterface
 {
+
     protected $wellKnown;
 
     public function __construct()

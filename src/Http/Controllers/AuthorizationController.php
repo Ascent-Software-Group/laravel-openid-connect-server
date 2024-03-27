@@ -15,7 +15,6 @@ use Laravel\Passport\Http\Controllers\AuthorizationController as LaravelAuthoriz
 use Laravel\Passport\TokenRepository;
 use League\OAuth2\Server\Exception\OAuthServerException;
 use League\OAuth2\Server\RequestTypes\AuthorizationRequest;
-use Nyholm\Psr7\Response as Psr7Response;
 use Psr\Http\Message\ServerRequestInterface;
 
 class AuthorizationController extends LaravelAuthorizationController
@@ -54,7 +53,7 @@ class AuthorizationController extends LaravelAuthorizationController
         ]);
     }
 
-    public function returnError(AuthorizationRequest $authorizationRequest, Request $request)
+    public function returnError(AuthorizationRequest $authorizationRequest)
     {
         $clientUris = Arr::wrap($authorizationRequest->getClient()->getRedirectUri());
 
@@ -64,17 +63,15 @@ class AuthorizationController extends LaravelAuthorizationController
 
         if ($authorizationRequest instanceof AuthenticationRequest && $authorizationRequest->getResponseMode() == 'web_message') {
             return (new WebMessageResponse())->setData([
-                'redirect_uri' => $uri,
-                'error'  => 'access_denied',
-                'state' => $authorizationRequest->getState(),
-            ])->generateHttpResponse(new Psr7Response());
+                                                           'redirect_uri' => $uri,
+                                                           'error'  => 'access_denied',
+                                                           'state' => $authorizationRequest->getState(),
+                                                       ])->generateHttpResponse(new Psr7Response);
         } else {
             $separator = $authorizationRequest->getGrantTypeId() === 'implicit' ? '#' : '?';
-            $uri = $uri . $separator . 'error=access_denied&state=' . $authorizationRequest->getState();
-
-            return $this->withErrorHandling(function () use ($uri) {
-                throw OAuthServerException::accessDenied(null, $uri);
-            });
+            return $this->response->redirectTo(
+                $uri . $separator . 'error=access_denied&state=' . $authorizationRequest->getState()
+            );
         }
     }
 
@@ -119,7 +116,7 @@ class AuthorizationController extends LaravelAuthorizationController
         if ($this->isApproved($authRequest, $request, $client, $tokens)) {
             return $this->approveRequest($authRequest, $user);
         } else {
-            return $this->returnError($authRequest, $request);
+            return $this->returnError($authRequest);
         }
     }
 
