@@ -8,7 +8,6 @@ use Idaas\Passport\PassportConfig;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
 use Laravel\Passport\Client;
 use Laravel\Passport\ClientRepository as LaravelClientRepository;
 use Laravel\Passport\Http\Controllers\AuthorizationController as LaravelAuthorizationController;
@@ -23,35 +22,22 @@ class AuthorizationController extends LaravelAuthorizationController
 
     public function isApproved(
         AuthorizationRequest $authRequest,
-        Request $request,
-        Client $clients,
+        ?Authenticatable $user,
+        Client $client,
         TokenRepository $tokens
     ) {
-        if ($request->user() == null) {
+        if ($user == null) {
             return false;
         }
 
         $scopes = $this->parseScopes($authRequest);
+
         $token = $tokens->findValidToken(
-            $user = $request->user(),
-            $client = $clients->find($authRequest->getClient()->getIdentifier())
+            $user,
+            $client
         );
 
-        if (($token && $token->scopes === collect($scopes)->pluck('id')->all()) ||
-            $client->skipsAuthorization()) {
-            return true;
-        }
-
-        $request->session()->put('authToken', $authToken = Str::random());
-        $request->session()->put('authRequest', $authRequest);
-
-        return $this->response->view('passport::authorize', [
-            'client' => $client,
-            'user' => $user,
-            'scopes' => $scopes,
-            'request' => $request,
-            'authToken' => $authToken,
-        ]);
+        return ($token && $token->scopes === collect($scopes)->pluck('id')->all());
     }
 
     public function returnError(AuthorizationRequest $authorizationRequest, Request $request)
@@ -114,6 +100,7 @@ class AuthorizationController extends LaravelAuthorizationController
         if ($authRequest == null) {
             throw OAuthServerException::invalidRequest('unknown', 'No authorization request found. Seems like a cookie problem.');
         }
+
         $user = $request->user();
         $client = $clients->find($authRequest->getClient()->getIdentifier());
 
