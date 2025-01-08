@@ -37,7 +37,7 @@ class AuthorizationController extends LaravelAuthorizationController
             $client
         );
 
-        return ($token && $token->scopes === collect($scopes)->pluck('id')->all());
+        return (($token && $token->scopes === collect($scopes)->pluck('id')->all()) || $client->skipsAuthorization());
     }
 
     public function returnError(AuthorizationRequest $authorizationRequest, Request $request)
