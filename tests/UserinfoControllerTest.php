@@ -33,6 +33,11 @@ class UserinfoControllerTest extends PassportTestCase
 
     protected function setUp(): void
     {
+
+        $this->afterApplicationCreated(function () {
+            $this->app->register(\Idaas\Passport\PassportServiceProvider::class);
+        });
+        
         parent::setUp();
 
         $accessTokenRepository = m::mock(\Idaas\Passport\Bridge\AccessTokenRepository::class);
@@ -87,8 +92,8 @@ class UserinfoControllerTest extends PassportTestCase
 
         $config = Configuration::forAsymmetricSigner(
             new Sha256(),
-            InMemory::file($keyRepository->getPrivateKey()->getKeyPath()),
-            InMemory::file($keyRepository->getPrivateKey()->getKeyPath())
+            InMemory::plainText($keyRepository->getPrivateKey()->getKeyContents()),
+            InMemory::plainText($keyRepository->getPrivateKey()->getKeyContents())
         );
 
         $token = $config->builder()

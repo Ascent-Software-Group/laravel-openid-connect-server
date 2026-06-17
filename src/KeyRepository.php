@@ -8,21 +8,25 @@ use Laravel\Passport\Passport;
 
 class KeyRepository
 {
-    public function getPrivateKey()
+    public function getPrivateKey(): CryptKey
     {
-        return new CryptKey(config('passport.private_key'));
+        $privateKey = config('passport.private_key')
+            ?? 'file://' . Passport::keyPath('oauth-private.key');
+        return new CryptKey($privateKey);
     }
 
-    public function getPublicKey()
+    public function getPublicKey(): CryptKey
     {
-        return new CryptKey(
-            config('passport.public_key')
-        );
+        $publicKey = config('passport.public_key')
+            ?? 'file://' . Passport::keyPath('oauth-public.key');
+        return new CryptKey($publicKey);
     }
 
-    public function getPublicKeyForClient(Client $client, $kid = null)
+    public function getPublicKeyForClient(Client $client, $kid = null): CryptKey
     {
-        return new CryptKey(config('passport.public_key'));
+        $publicKey = config('passport.public_key')
+            ?? file_get_contents('file://' . Passport::keyPath('oauth-public.key'));
+        return new CryptKey($publicKey);
     }
 
     public function getAllPublicKeys()
@@ -30,7 +34,7 @@ class KeyRepository
         return [$this->getPublicKey()];
     }
 
-    public function getPrivateKeyByKid($kid)
+    public function getPrivateKeyByKid($kid): CryptKey
     {
         return $this->getPrivateKey();
     }

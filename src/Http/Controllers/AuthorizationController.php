@@ -8,13 +8,13 @@ use Idaas\Passport\PassportConfig;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
 use Laravel\Passport\Client;
 use Laravel\Passport\ClientRepository as LaravelClientRepository;
 use Laravel\Passport\Http\Controllers\AuthorizationController as LaravelAuthorizationController;
 use Laravel\Passport\TokenRepository;
 use League\OAuth2\Server\Exception\OAuthServerException;
 use League\OAuth2\Server\RequestTypes\AuthorizationRequest;
+use Nyholm\Psr7\Response as Psr7Response;
 use Psr\Http\Message\ServerRequestInterface;
 
 class AuthorizationController extends LaravelAuthorizationController
@@ -22,38 +22,25 @@ class AuthorizationController extends LaravelAuthorizationController
 
     public function isApproved(
         AuthorizationRequest $authRequest,
-        Request $request,
-        Client $clients,
+        ?Authenticatable $user,
+        Client $client,
         TokenRepository $tokens
     ) {
-        if ($request->user() == null) {
+        if ($user == null) {
             return false;
         }
 
         $scopes = $this->parseScopes($authRequest);
+
         $token = $tokens->findValidToken(
-            $user = $request->user(),
-            $client = $clients->find($authRequest->getClient()->getIdentifier())
+            $user,
+            $client
         );
 
-        if (($token && $token->scopes === collect($scopes)->pluck('id')->all()) ||
-            $client->skipsAuthorization()) {
-            return true;
-        }
-
-        $request->session()->put('authToken', $authToken = Str::random());
-        $request->session()->put('authRequest', $authRequest);
-
-        return $this->response->view('passport::authorize', [
-            'client' => $client,
-            'user' => $user,
-            'scopes' => $scopes,
-            'request' => $request,
-            'authToken' => $authToken,
-        ]);
+        return (($token && $token->scopes === collect($scopes)->pluck('id')->all()) || $client->skipsAuthorization());
     }
 
-    public function returnError(AuthorizationRequest $authorizationRequest)
+    public function returnError(AuthorizationRequest $authorizationRequest, Request $request)
     {
         $clientUris = Arr::wrap($authorizationRequest->getClient()->getRedirectUri());
 
@@ -63,15 +50,17 @@ class AuthorizationController extends LaravelAuthorizationController
 
         if ($authorizationRequest instanceof AuthenticationRequest && $authorizationRequest->getResponseMode() == 'web_message') {
             return (new WebMessageResponse())->setData([
-                                                           'redirect_uri' => $uri,
-                                                           'error'  => 'access_denied',
-                                                           'state' => $authorizationRequest->getState(),
-                                                       ])->generateHttpResponse(new Psr7Response);
+                'redirect_uri' => $uri,
+                'error'  => 'access_denied',
+                'state' => $authorizationRequest->getState(),
+            ])->generateHttpResponse(new Psr7Response());
         } else {
             $separator = $authorizationRequest->getGrantTypeId() === 'implicit' ? '#' : '?';
-            return $this->response->redirectTo(
-                $uri . $separator . 'error=access_denied&state=' . $authorizationRequest->getState()
-            );
+            $uri = $uri . $separator . 'error=access_denied&state=' . $authorizationRequest->getState();
+
+            return $this->withErrorHandling(function () use ($uri) {
+                throw OAuthServerException::accessDenied(null, $uri);
+            });
         }
     }
 
@@ -111,12 +100,14 @@ class AuthorizationController extends LaravelAuthorizationController
         if ($authRequest == null) {
             throw OAuthServerException::invalidRequest('unknown', 'No authorization request found. Seems like a cookie problem.');
         }
+
         $user = $request->user();
         $client = $clients->find($authRequest->getClient()->getIdentifier());
-        if ($this->isApproved($authRequest, $request, $client, $tokens)) {
+
+        if ($client->skipsAuthorization() || $this->isApproved($authRequest, $user, $client, $tokens)) {
             return $this->approveRequest($authRequest, $user);
         } else {
-            return $this->returnError($authRequest);
+            return $this->returnError($authRequest, $request);
         }
     }
 

@@ -4,7 +4,6 @@ namespace Idaas\Passport\Model;
 
 class Provider implements ProviderInterface
 {
-
     protected $wellKnown;
 
     public function __construct()
@@ -80,8 +79,6 @@ class Provider implements ProviderInterface
 
     public function toJson($options = 0)
     {
-        return json_encode(
-            $this->wellKnown
-        , $options);
+        return json_encode($this->wellKnown, $options);
     }
 }
