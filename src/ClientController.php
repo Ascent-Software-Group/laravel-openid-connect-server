@@ -117,7 +117,7 @@ class ClientController extends LaravelClientController
     {
         
         $data = $this->validate($request, $this->validations, $this->messages);
-        $client = $this->clients->getRepository()->create(
+        $client = $this->clients->getRepository()->createOidcClient(
             $request->user()->getKey(),
             $request->client_name,
             $request->redirect_uris
