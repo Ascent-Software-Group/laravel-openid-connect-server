@@ -12,14 +12,14 @@ class KeyRepository
     {
         $privateKey = config('passport.private_key')
             ?? 'file://' . Passport::keyPath('oauth-private.key');
-        return new CryptKey($privateKey);
+        return new CryptKey($privateKey, null, Passport::$validateKeyPermissions);
     }
 
     public function getPublicKey(): CryptKey
     {
         $publicKey = config('passport.public_key')
             ?? 'file://' . Passport::keyPath('oauth-public.key');
-        return new CryptKey($publicKey);
+        return new CryptKey($publicKey, null, Passport::$validateKeyPermissions);
     }
 
     public function getPublicKeyForClient(Client $client, $kid = null): CryptKey

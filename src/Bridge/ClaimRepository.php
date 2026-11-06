@@ -46,7 +46,7 @@ class ClaimRepository implements ClaimRepositoryInterface
         return $result;
     }
 
-    public function claimsRequestToEntities(array $json = null)
+    public function claimsRequestToEntities(?array $json = null)
     {
         $result = [];
 
