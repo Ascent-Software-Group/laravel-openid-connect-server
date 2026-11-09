@@ -8,9 +8,7 @@ use Illuminate\Contracts\Validation\Factory as ValidationFactory;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Idaas\Passport\Bridge\ClientRepository;
 
-use Laravel\Passport\Http\Controllers\ClientController as LaravelClientController;
-
-class ClientController extends LaravelClientController
+class ClientController
 {
     use ValidatesRequests;
 

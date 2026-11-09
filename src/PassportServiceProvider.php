@@ -16,7 +16,6 @@ use Idaas\Passport\Bridge\UserRepository;
 use Idaas\Passport\Guards\TokenGuard;
 use Idaas\Passport\Http\Controllers\AuthorizationController;
 use Idaas\Passport\Model\Client;
-use Idaas\Passport\Model\PersonalAccessClient;
 use Illuminate\Contracts\Auth\StatefulGuard;
 use Illuminate\Support\Facades\Route;
 use Laravel\Passport\Bridge\AccessTokenRepository as BridgeAccessTokenRepository;
@@ -41,15 +40,9 @@ class PassportServiceProvider extends LaravelPassportServiceProvider
         return Client::class;
     }
 
-    protected function getPersonalAccessClientModel()
-    {
-        return PersonalAccessClient::class;
-    }
-
     public function boot(): void
     {
         Passport::useClientModel($this->getClientModel());
-        Passport::usePersonalAccessClientModel($this->getPersonalAccessClientModel());
         // Passport::useTokenModel()
 
         parent::boot();
@@ -163,9 +156,7 @@ class PassportServiceProvider extends LaravelPassportServiceProvider
 
     protected function registerMigrations(): void
     {
-        if (property_exists(Passport::class, 'runsMigrations') && Passport::$runsMigrations) {
-            $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
-        }
+        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
     }
 
     protected function registerRoutes(): void

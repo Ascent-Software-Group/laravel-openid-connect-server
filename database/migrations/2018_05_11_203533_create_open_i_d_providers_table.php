@@ -13,6 +13,10 @@ class CreateOpenIDProvidersTable extends Migration
      */
     public function up()
     {
+        if (Schema::hasTable('open_i_d_providers')) {
+            return;
+        }
+
         Schema::create('open_i_d_providers', function (Blueprint $table) {
             $table->increments('id');
 

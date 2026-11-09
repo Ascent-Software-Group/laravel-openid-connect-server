@@ -39,7 +39,15 @@ class AuthorizationController extends LaravelAuthorizationController
             }
 
             return $authenticateResponse;
-        }, ($psrRequest->getQueryParams()['response_type'] ?? null) === 'token');
+        }, $this->usesFragmentResponse($psrRequest->getQueryParams()['response_type'] ?? null));
+    }
+
+    /**
+     * Implicit and hybrid response types (token, id_token) return their response in the URL fragment.
+     */
+    protected function usesFragmentResponse(?string $responseType): bool
+    {
+        return array_intersect(explode(' ', (string) $responseType), ['token', 'id_token']) !== [];
     }
 
     public function continueAuthorize(

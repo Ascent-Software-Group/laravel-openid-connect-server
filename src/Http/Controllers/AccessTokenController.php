@@ -28,7 +28,8 @@ class AccessTokenController extends ControllersAccessTokenController
 
     /**
      * A reused authorization code already fails the token request. Revoke the access
-     * token that was issued the first time the code was exchanged.
+     * tokens that the same client holds for the user, which includes the one issued
+     * the first time the code was exchanged.
      */
     protected function revokeTokensIssuedForReusedAuthorizationCode(): void
     {
@@ -41,10 +42,13 @@ class AccessTokenController extends ControllersAccessTokenController
         $this->setEncryptionKey(Passport::tokenEncryptionKey(app('encrypter')));
         $authCodePayload = json_decode($this->decrypt($encryptedAuthCode));
 
-        if (! isset($authCodePayload->user_id)) {
+        if (! isset($authCodePayload->user_id, $authCodePayload->client_id)) {
             return;
         }
 
-        Passport::token()->where('user_id', $authCodePayload->user_id)->update(['revoked' => true]);
+        Passport::token()
+            ->where('user_id', $authCodePayload->user_id)
+            ->where('client_id', $authCodePayload->client_id)
+            ->update(['revoked' => true]);
     }
 }

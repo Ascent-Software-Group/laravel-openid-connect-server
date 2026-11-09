@@ -24,45 +24,16 @@ use Laravel\Passport\Bridge\Scope;
 use Laravel\Passport\Contracts\AuthorizationViewResponse;
 use Laravel\Passport\Http\Controllers\AccessTokenController;
 use Laravel\Passport\Passport;
-use Laravel\Passport\Token;
-use Laravel\Passport\TokenRepository;
-use Lcobucci\JWT\Encoding\JoseEncoder;
-use Lcobucci\JWT\Token\Parser;
 use League\OAuth2\Server\AuthorizationServer;
 use League\OAuth2\Server\Entities\ClientEntityInterface;
 use Mockery as m;
-use Laravel\Passport\Tests\Feature\PassportTestCase;
+use Nyholm\Psr7\Response as Psr7Response;
 use Psr\Http\Message\ServerRequestInterface;
 use League\OAuth2\Server\Repositories\AccessTokenRepositoryInterface as LeagueAccessTokenRepositoryInterface;
 use League\OAuth2\Server\Repositories\ScopeRepositoryInterface;
 
-class AuthorizationControllerTest extends PassportTestCase
+class AuthorizationControllerTest extends TestCase
 {
-    public static function setUpBeforeClass(): void
-    {
-        chmod(__DIR__ . '/files/oauth-private.key', 0600);
-        chmod(__DIR__ . '/files/oauth-public.key', 0600);
-    }
-
-    protected function setUp(): void
-    {
-
-        $this->afterApplicationCreated(function () {
-            $this->app->register(\Idaas\Passport\PassportServiceProvider::class);
-        });
-
-        Passport::loadKeysFrom(__DIR__ . '/files');
-        parent::setUp();
-
-        chmod(__DIR__ . '/../vendor/laravel/passport/tests/Feature/../keys/oauth-private.key', 0660);
-        chmod(__DIR__ . '/../vendor/laravel/passport/tests/Feature/../keys/oauth-public.key', 0660);
-    }
-
-    protected function tearDown(): void
-    {
-        m::close();
-    }
-
     public function testAuthorizationBasic()
     {
         Passport::tokensCan([
@@ -71,7 +42,12 @@ class AuthorizationControllerTest extends PassportTestCase
 
         $clients = m::mock(ClientRepository::class);
         $clients->shouldReceive('find')->andReturn(
-            $client = new Client([])
+            new class([]) extends Client {
+                public function skipsAuthorization(Authenticatable $user, array $scopes): bool
+                {
+                    return true;
+                }
+            }
         );
 
         $client  = m::mock(ClientEntityInterface::class);
@@ -138,13 +114,13 @@ class AuthorizationControllerTest extends PassportTestCase
             new DateInterval('P1Y')
         );
 
-        $response = m::mock(AuthorizationViewResponse::class);
+        $viewResponse = m::mock(AuthorizationViewResponse::class);
         $guard = m::mock(\Illuminate\Contracts\Auth\StatefulGuard::class);
 
         $controller = new AuthorizationController(
             $server,
             $guard,
-            $response
+            $clients
         );
 
         $authenticationRequest = m::mock(AuthenticationRequest::class);
@@ -164,13 +140,6 @@ class AuthorizationControllerTest extends PassportTestCase
         $request = m::mock(Request::class);
         $request->shouldReceive('user')->andReturn($user);
 
-        $tokens = m::mock(TokenRepository::class);
-        $token = m::mock(Token::class);
-        $token->shouldReceive('getAttribute')->andReturn([]);
-        $tokens->shouldReceive('findValidToken')->andReturn(
-            $token
-        );
-
         $serverRequest = m::mock(ServerRequestInterface::class);
         $serverRequest->shouldReceive('getQueryParams')->andReturn([
             'response_type' => 'code',
@@ -185,8 +154,8 @@ class AuthorizationControllerTest extends PassportTestCase
         $result = $controller->authorize(
             $serverRequest,
             $request,
-            $clients,
-            $tokens
+            new Psr7Response(),
+            $viewResponse
         );
 
         $location = $result->headers->get('Location');
@@ -198,7 +167,7 @@ class AuthorizationControllerTest extends PassportTestCase
         parse_str($parsed['query'], $parseStr);
         $this->assertArrayHasKey('code', $parseStr);
 
-        $controller = new AccessTokenController($server, $tokens, new Parser(new JoseEncoder()));
+        $controller = new AccessTokenController($server);
 
         $serverRequest = m::mock(ServerRequestInterface::class);
         $serverRequest->shouldReceive('getParsedBody')->andReturn([
@@ -211,9 +180,9 @@ class AuthorizationControllerTest extends PassportTestCase
         $serverRequest->shouldReceive('getServerParams')->andReturn([]);
         $serverRequest->shouldReceive('hasHeader')->andReturn(false);
 
-        $response = $controller->issueToken($serverRequest);
+        $response = $controller->issueToken($serverRequest, new Psr7Response());
 
-        $content = $response->content();
+        $content = $response->getContent();
 
         $this->assertJson($content);
 
