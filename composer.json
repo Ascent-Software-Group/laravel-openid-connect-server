@@ -21,10 +21,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "IdaasPassportTests\\": "tests/",
-            "Laravel\\Passport\\Tests\\": "vendor/laravel/passport/tests/",
-            "Workbench\\App\\": "workbench/app/",
-            "Workbench\\Database\\Factories\\": "workbench/database/factories/"
+            "IdaasPassportTests\\": "tests/"
         }
     },
     "extra": {
