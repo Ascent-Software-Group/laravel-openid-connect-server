@@ -4,7 +4,9 @@ namespace IdaasPassportTests;
 
 use Idaas\Passport\Http\Controllers\AccessTokenController;
 use Idaas\Passport\Http\Controllers\AuthorizationController;
+use Idaas\Passport\Model\Client;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Laravel\Passport\ClientRepository;
 use Laravel\Passport\Passport;
@@ -92,6 +94,25 @@ class OidcBehaviorTest extends TestCase
         $this->assertTrue(Passport::token()->find('reused-client-token')->revoked);
         $this->assertFalse(Passport::token()->find('other-client-token')->revoked);
         $this->assertFalse(Passport::token()->find('other-user-token')->revoked);
+    }
+
+    public function testClientRegistrationReturnsThePlainSecretOnce()
+    {
+        $this->actingAs(new TestUser());
+
+        $response = $this->postJson('/oauth/connect/register', [
+            'client_name' => 'Registered Client',
+            'redirect_uris' => ['https://example.com/callback'],
+        ]);
+
+        $response->assertSuccessful();
+        $response->assertJsonMissingPath('secret');
+
+        $plainSecret = $response->json('plain_secret');
+        $client = Client::query()->find($response->json('client_id'));
+
+        $this->assertNotSame($plainSecret, $client->secret);
+        $this->assertTrue(Hash::check($plainSecret, $client->secret));
     }
 
     protected function createToken(string $id, string $userId, string $clientId): void

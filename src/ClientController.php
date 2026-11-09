@@ -119,13 +119,12 @@ class ClientController
             $request->user()->getKey(),
             $request->client_name,
             $request->redirect_uris
-        )->makeVisible('secret');
-            
-        $client->forceFill($data);
+        );
 
+        $client->forceFill($data);
         $client->save();
 
-        return $client;
+        return $client->makeHidden('secret')->append('plain_secret');
     }
 
 
