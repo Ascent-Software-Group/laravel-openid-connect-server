@@ -13,7 +13,6 @@ use Laravel\Passport\Contracts\AuthorizationViewResponse;
 use Laravel\Passport\Http\Controllers\AuthorizationController as LaravelAuthorizationController;
 use League\OAuth2\Server\Exception\OAuthServerException;
 use League\OAuth2\Server\RequestTypes\AuthorizationRequestInterface;
-use Nyholm\Psr7\Response as Psr7Response;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Symfony\Component\HttpFoundation\Response;
@@ -113,14 +112,6 @@ class AuthorizationController extends LaravelAuthorizationController
 
         if (! in_array($uri = $authorizationRequest->getRedirectUri(), $clientUris)) {
             $uri = Arr::first($clientUris);
-        }
-
-        if ($authorizationRequest instanceof AuthenticationRequest && $authorizationRequest->getResponseMode() == 'web_message') {
-            return (new WebMessageResponse())->setData([
-                'redirect_uri' => $uri,
-                'error' => 'access_denied',
-                'state' => $authorizationRequest->getState(),
-            ])->generateHttpResponse(new Psr7Response());
         }
 
         $separator = in_array($authorizationRequest->getGrantTypeId(), ['implicit', 'implicit_oidc'], true) ? '#' : '?';

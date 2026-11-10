@@ -4,8 +4,10 @@ namespace IdaasPassportTests;
 
 use Idaas\Passport\Http\Controllers\AccessTokenController;
 use Idaas\Passport\Http\Controllers\AuthorizationController;
+use Idaas\OpenID\RequestTypes\AuthenticationRequest;
 use Idaas\Passport\Model\Client;
 use Illuminate\Http\Request;
+use League\OAuth2\Server\Entities\ClientEntityInterface;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Laravel\Passport\ClientRepository;
@@ -113,6 +115,35 @@ class OidcBehaviorTest extends TestCase
 
         $this->assertNotSame($plainSecret, $client->secret);
         $this->assertTrue(Hash::check($plainSecret, $client->secret));
+    }
+
+    public function testWebMessageDenialRedirectsInsteadOfLoadingAMissingResponse()
+    {
+        $controller = new AuthorizationController(
+            $this->app->make(AuthorizationServer::class),
+            $this->app['auth']->guard('web'),
+            $this->app->make(ClientRepository::class)
+        );
+
+        $client = \Mockery::mock(ClientEntityInterface::class);
+        $client->shouldReceive('getRedirectUri')->andReturn('https://example.com/callback');
+
+        $authorizationRequest = \Mockery::mock(AuthenticationRequest::class);
+        $authorizationRequest->shouldReceive('getClient')->andReturn($client);
+        $authorizationRequest->shouldReceive('getRedirectUri')->andReturn('https://example.com/callback');
+        $authorizationRequest->shouldReceive('getResponseMode')->andReturn('web_message');
+        $authorizationRequest->shouldReceive('getGrantTypeId')->andReturn('authorization_code_oidc');
+        $authorizationRequest->shouldReceive('getState')->andReturn('abc');
+
+        try {
+            $controller->returnError($authorizationRequest, Request::create('/oauth/authorize'));
+            $this->fail('The denial did not produce an OAuth response.');
+        } catch (\Laravel\Passport\Exceptions\OAuthServerException $exception) {
+            $this->assertStringContainsString(
+                'error=access_denied&state=abc',
+                (string) $exception->getResponse()->headers->get('Location')
+            );
+        }
     }
 
     protected function createToken(string $id, string $userId, string $clientId): void
