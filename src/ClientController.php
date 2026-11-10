@@ -8,9 +8,7 @@ use Illuminate\Contracts\Validation\Factory as ValidationFactory;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Idaas\Passport\Bridge\ClientRepository;
 
-use Laravel\Passport\Http\Controllers\ClientController as LaravelClientController;
-
-class ClientController extends LaravelClientController
+class ClientController
 {
     use ValidatesRequests;
 
@@ -117,17 +115,16 @@ class ClientController extends LaravelClientController
     {
         
         $data = $this->validate($request, $this->validations, $this->messages);
-        $client = $this->clients->getRepository()->create(
+        $client = $this->clients->getRepository()->createOidcClient(
             $request->user()->getKey(),
             $request->client_name,
             $request->redirect_uris
-        )->makeVisible('secret');
-            
-        $client->forceFill($data);
+        );
 
+        $client->forceFill($data);
         $client->save();
 
-        return $client;
+        return $client->makeHidden('secret')->append('plain_secret');
     }
 
 

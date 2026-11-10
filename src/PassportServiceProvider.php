@@ -16,7 +16,6 @@ use Idaas\Passport\Bridge\UserRepository;
 use Idaas\Passport\Guards\TokenGuard;
 use Idaas\Passport\Http\Controllers\AuthorizationController;
 use Idaas\Passport\Model\Client;
-use Idaas\Passport\Model\PersonalAccessClient;
 use Illuminate\Contracts\Auth\StatefulGuard;
 use Illuminate\Support\Facades\Route;
 use Laravel\Passport\Bridge\AccessTokenRepository as BridgeAccessTokenRepository;
@@ -27,11 +26,12 @@ use Laravel\Passport\ClientRepository as PassportClientRepository;
 use Laravel\Passport\Passport;
 use Laravel\Passport\PassportServiceProvider as LaravelPassportServiceProvider;
 use League\OAuth2\Server\AuthorizationServer;
+use League\OAuth2\Server\CryptKey;
 use League\OAuth2\Server\ResourceServer;
-use Illuminate\Auth\RequestGuard;
+use League\OAuth2\Server\ResponseTypes\ResponseTypeInterface;
 use Illuminate\Support\Facades\Auth;
+use Laravel\Passport\Guards\TokenGuard as PassportTokenGuard;
 use Laravel\Passport\PassportUserProvider;
-use Laravel\Passport\TokenRepository;
 
 class PassportServiceProvider extends LaravelPassportServiceProvider
 {
@@ -40,18 +40,14 @@ class PassportServiceProvider extends LaravelPassportServiceProvider
         return Client::class;
     }
 
-    protected function getPersonalAccessClientModel()
-    {
-        return PersonalAccessClient::class;
-    }
-
-    public function boot()
+    public function boot(): void
     {
         Passport::useClientModel($this->getClientModel());
-        Passport::usePersonalAccessClientModel($this->getPersonalAccessClientModel());
         // Passport::useTokenModel()
 
         parent::boot();
+
+        $this->registerMigrations();
 
         $this->app->bindIf(ClaimRepositoryInterface::class, ClaimRepository::class);
         $this->app->bindIf(UserRepositoryInterface::class, UserRepository::class);
@@ -74,16 +70,16 @@ class PassportServiceProvider extends LaravelPassportServiceProvider
         );
     }
 
-    protected function makeCryptKey($type)
+    protected function makeCryptKey(string $type): CryptKey
     {
         if ($type == 'private') {
             return resolve(KeyRepository::class)->getPrivateKey();
-        } else {
-            return resolve(KeyRepository::class)->getPublicKey();
         }
+
+        return resolve(KeyRepository::class)->getPublicKey();
     }
 
-    protected function registerResourceServer()
+    protected function registerResourceServer(): void
     {
         $this->app->singleton(ResourceServer::class, function () {
             // TODO: consider using AdvancedResourceServer
@@ -94,16 +90,19 @@ class PassportServiceProvider extends LaravelPassportServiceProvider
         });
     }
 
-    public function makeAuthorizationServer()
+    public function makeAuthorizationServer(?ResponseTypeInterface $responseType = null): AuthorizationServer
     {
         $server = new AuthorizationServer(
             $this->app->make(Bridge\ClientRepository::class),
             $this->app->make(Bridge\AccessTokenRepository::class),
             $this->app->make(ScopeRepository::class),
-            resolve(KeyRepository::class)->getPrivateKey(),
-            app('encrypter')->getKey(),
-            new BearerTokenResponse
+            $this->makeCryptKey('private'),
+            Passport::tokenEncryptionKey($this->app->make('encrypter')),
+            $responseType ?? new BearerTokenResponse
         );
+
+        $server->setDefaultScope(Passport::$defaultScope);
+        $server->revokeRefreshTokens(Passport::$revokeRefreshTokenAfterUse);
 
         $authCodeGrant = new AuthCodeGrant(
             $this->app->make(AuthCodeRepository::class),
@@ -137,45 +136,30 @@ class PassportServiceProvider extends LaravelPassportServiceProvider
      *
      * @return void
      */
-    protected function registerClientRepository()
+    protected function registerClientRepository(): void
     {
-        $this->app->singleton(PassportClientRepository::class, function ($container) {
-            $config = $container->make('config')->get('passport.personal_access_client');
-
-            return new ClientRepository($config['id'] ?? null, $config['secret'] ?? null);
+        $this->app->singleton(PassportClientRepository::class, function () {
+            return new ClientRepository;
         });
     }
 
-    protected function buildAuthCodeGrant()
+    protected function makeGuard(array $config): PassportTokenGuard
     {
-        $grant = parent::buildAuthCodeGrant();
-        return $grant;
+        return new TokenGuard(
+            $this->app->make(ResourceServer::class),
+            new PassportUserProvider(Auth::createUserProvider($config['provider']), $config['provider']),
+            $this->app->make(PassportClientRepository::class),
+            $this->app->make('encrypter'),
+            $this->app->make('request'),
+        );
     }
 
-    protected function makeGuard(array $config)
+    protected function registerMigrations(): void
     {
-        return new RequestGuard(function ($request) use ($config) {
-            return (new TokenGuard(
-                $this->app->make(ResourceServer::class),
-                new PassportUserProvider(Auth::createUserProvider($config['provider']), 'users'),
-                $this->app->make(TokenRepository::class),
-                $this->app->make(ClientRepository::class),
-                $this->app->make('encrypter'),
-                $this->app['request'],
-            ))->user();
-        }, $this->app['request']);
+        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
     }
 
-    protected function registerMigrations()
-    {
-        parent::registerMigrations();
-
-        if (Passport::$runsMigrations) {
-            $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
-        }
-    }
-
-    protected function registerRoutes()
+    protected function registerRoutes(): void
     {
         parent::registerRoutes();
 
@@ -188,11 +172,14 @@ class PassportServiceProvider extends LaravelPassportServiceProvider
         }
     }
 
-    public function register()
+    public function register(): void
     {
         parent::register();
+
+        $this->registerClientRepository();
+
         $this->app->when(AuthorizationController::class)
             ->needs(StatefulGuard::class)
-            ->give(fn() => Auth::guard(config('passport.guard', null)));
+            ->give(fn () => Auth::guard(config('passport.guard', null)));
     }
 }

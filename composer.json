@@ -16,16 +16,12 @@
     },
     "config": {
         "preferred-install": {
-            "laravel/passport": "source",
             "*": "dist"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "IdaasPassportTests\\": "tests/",
-            "Laravel\\Passport\\Tests\\": "vendor/laravel/passport/tests/",
-            "Workbench\\App\\": "workbench/app/",
-            "Workbench\\Database\\Factories\\": "workbench/database/factories/"
+            "IdaasPassportTests\\": "tests/"
         }
     },
     "extra": {
@@ -38,23 +34,23 @@
     "repositories": [
         {
             "type": "vcs",
-            "url":  "git@github.com:Ascent-Software-Group/openid-connect-server.git"
+            "url": "git@github.com:Ascent-Software-Group/openid-connect-server.git"
         }
     ],
     "require": {
         "laravel/legacy-factories": "^1.3",
-        "nl.idaas/openid-server": "dev-master",
+        "nl.idaas/openid-server": "dev-develop",
         "illuminate/http": "^11.0|^12.0|^13.0",
         "illuminate/contracts": "^11.0|^12.0|^13.0",
         "illuminate/support": "^11.0|^12.0|^13.0",
         "illuminate/auth": "^11.0|^12.0|^13.0",
         "illuminate/database": "^11.0|^12.0|^13.0",
-        "laravel/passport": "^11.0|^12.0|^13.0"
+        "laravel/passport": "^13.0"
     },
     "require-dev": {
         "mockery/mockery": "^1.0",
-        "orchestra/testbench": "^6.0|^7.0|^8",
-        "phpunit/phpunit": "^9.3"
+        "orchestra/testbench": "^9.0|^10.0|^11.0",
+        "phpunit/phpunit": "^10.5|^11.5|^12.0"
     },
     "license": "LGPL-3.0-only"
 }

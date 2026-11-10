@@ -16,7 +16,7 @@ class AccessTokenEntity extends AccessToken
         return ['test'];
     }
 
-    public function getScopes()
+    public function getScopes(): array
     {
         return [
             new Scope('openid')

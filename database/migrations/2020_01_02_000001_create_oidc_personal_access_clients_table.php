@@ -13,6 +13,10 @@ class CreateOidcPersonalAccessClientsTable extends Migration
      */
     public function up()
     {
+        if (Schema::hasTable('oidc_personal_access_clients')) {
+            return;
+        }
+
         Schema::create('oidc_personal_access_clients', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->uuid('client_id')->index();

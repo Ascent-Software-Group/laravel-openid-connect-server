@@ -13,6 +13,10 @@ class CreateOidcClientsTable extends Migration
      */
     public function up()
     {
+        if (Schema::hasTable('oidc_clients')) {
+            return;
+        }
+
         Schema::create('oidc_clients', function (Blueprint $table) {
 
             $table->uuid('client_id')->primary();
